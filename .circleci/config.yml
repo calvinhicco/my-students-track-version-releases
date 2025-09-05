@@ -25,8 +25,18 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 18
             
-            # Update electron.js to use Vercel URL
-            sed -i '' 's|const appURL = "http://localhost:3000"|const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"|g' electron.js
+            # Check if electron.js exists and update it
+            if [ -f "electron.js" ]; then
+              # Create backup
+              cp electron.js electron.js.backup
+              
+              # Update electron.js to use Vercel URL
+              sed -i '' 's|const appURL = "http://localhost:3000"|const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"|g' electron.js
+              
+              echo "✅ Updated electron.js to use Vercel URL"
+            else
+              echo "⚠️ electron.js not found, skipping URL update"
+            fi
             
       # Create macOS icon
       - run:
