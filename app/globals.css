@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* School-themed primary color - professional blue */
+    --primary: 210 100% 35%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 210 100% 35%;
+    --radius: 0.5rem;
+
+    /* Chart colors for analytics */
+    --chart-1: 210 100% 50%;
+    --chart-2: 160 100% 45%;
+    --chart-3: 30 100% 50%;
+    --chart-4: 280 100% 50%;
+    --chart-5: 340 100% 50%;
+
+    /* Success and info colors */
+    --success: 142 71% 45%;
+    --info: 200 100% 50%;
+    --warning: 38 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Toast notification enhancements */
+.toast-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.toast-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+/* Print-friendly styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+  }
+
+  .print-break-after {
+    page-break-after: always;
+  }
+}
+
+/* Accessibility improvements */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Animation support */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
