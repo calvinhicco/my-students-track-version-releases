@@ -1,0 +1,82 @@
+name: Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build for'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - windows
+        - macos
+        - linux
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            build-script: dist-win
+            artifact-name: windows-installer
+            artifact-path: "dist/*.exe"
+          - os: macos-latest
+            platform: macos
+            build-script: dist-mac
+            artifact-name: macos-installer
+            artifact-path: "dist/*.dmg"
+          - os: ubuntu-latest
+            platform: linux
+            build-script: dist-linux
+            artifact-name: linux-installer
+            artifact-path: "dist/*.AppImage"
+    
+    runs-on: ${{ matrix.os }}
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == matrix.platform
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Create proper macOS icon (macOS only)
+        if: matrix.platform == 'macos'
+        run: |
+          mkdir -p icon.iconset
+          sips -z 16 16 public/logo.png --out icon.iconset/icon_16x16.png
+          sips -z 32 32 public/logo.png --out icon.iconset/icon_16x16@2x.png
+          sips -z 32 32 public/logo.png --out icon.iconset/icon_32x32.png
+          sips -z 64 64 public/logo.png --out icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 public/logo.png --out icon.iconset/icon_128x128.png
+          sips -z 256 256 public/logo.png --out icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 public/logo.png --out icon.iconset/icon_256x256.png
+          sips -z 512 512 public/logo.png --out icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 public/logo.png --out icon.iconset/icon_512x512.png
+          sips -z 1024 1024 public/logo.png --out icon.iconset/icon_512x512@2x.png
+          iconutil -c icns icon.iconset
+          mv icon.icns public/logo.icns
+      
+      - name: Build Next.js app
+        run: npm run build
+      
+      - name: Build Electron app
+        run: npm run ${{ matrix.build-script }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-path }}
+          retention-days: 30

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- Remove the CSP from here - we'll set it in electron.js -->
+  <title>My Students Track</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f3ff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .loading-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(128, 0, 128, 0.2);
+      border-radius: 50%;
+      border-top-color: #800080;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #800080;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+    }
+    .error-container {
+      display: none;
+      background-color: #fff;
+      border: 1px solid #f0a0a0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      max-width: 80%;
+      text-align: left;
+    }
+    .error-title {
+      color: #e53e3e;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .error-message {
+      font-family: monospace;
+      background-color: #f7f7f7;
+      padding: 10px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .retry-button {
+      background-color: #800080;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+    .retry-button:hover {
+      background-color: #6a006a;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-container">
+    <div class="spinner"></div>
+    <div class="title">My Students Track</div>
+    <div class="subtitle">Loading application...</div>
+    
+    <div id="error-container" class="error-container">
+      <div class="error-title">Error Loading Application</div>
+      <div id="error-message" class="error-message"></div>
+      <button id="retry-button" class="retry-button">Retry</button>
+    </div>
+  </div>
+
+  <!-- Use external script instead of inline -->
+  <script src="./loader.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+My Students Track version 2.0.0
+
+Minimum requirements:
+Operating System: Windows 10 (64-bit) or newer
+Processor: A modern dual-core CPU (e.g., Intel Core i3 or equivalent)
+Memory (RAM): 4 GB (minimum), 8 GB or more (recommended)
+Disk Space: At least 500 MB of free storage for installation
+Display: Minimum resolution of 1024x768 pixels"
