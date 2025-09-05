@@ -1,0 +1,107 @@
+version: 2.1
+
+jobs:
+  build-macos:
+    macos:
+      xcode: 14.2.0
+    steps:
+      - checkout
+      
+      # Install Node.js
+      - run:
+          name: Install Node.js
+          command: |
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 18
+            nvm use 18
+            
+      # Update Electron to use Vercel URL
+      - run:
+          name: Configure Electron for Vercel
+          command: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18
+            
+            # Update electron.js to use Vercel URL
+            sed -i '' 's|const appURL = "http://localhost:3000"|const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"|g' electron.js
+            
+      # Create macOS icon
+      - run:
+          name: Create macOS Icon
+          command: |
+            if [ ! -f "public/logo.icns" ]; then
+              if [ -f "public/logo.png" ]; then
+                # Create iconset directory
+                mkdir -p logo.iconset
+                
+                # Generate different sizes
+                sips -z 16 16 public/logo.png --out logo.iconset/icon_16x16.png
+                sips -z 32 32 public/logo.png --out logo.iconset/icon_16x16@2x.png
+                sips -z 32 32 public/logo.png --out logo.iconset/icon_32x32.png
+                sips -z 64 64 public/logo.png --out logo.iconset/icon_32x32@2x.png
+                sips -z 128 128 public/logo.png --out logo.iconset/icon_128x128.png
+                sips -z 256 256 public/logo.png --out logo.iconset/icon_128x128@2x.png
+                sips -z 256 256 public/logo.png --out logo.iconset/icon_256x256.png
+                sips -z 512 512 public/logo.png --out logo.iconset/icon_256x256@2x.png
+                sips -z 512 512 public/logo.png --out logo.iconset/icon_512x512.png
+                sips -z 1024 1024 public/logo.png --out logo.iconset/icon_512x512@2x.png
+                
+                # Create icns file
+                iconutil -c icns logo.iconset -o public/logo.icns
+                
+                echo "✅ Created macOS icon"
+              else
+                echo "⚠️ No logo.png found, using default icon"
+              fi
+            else
+              echo "✅ macOS icon already exists"
+            fi
+            
+      # Install dependencies and build
+      - run:
+          name: Install Dependencies
+          command: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18
+            npm install
+            
+      # Build Next.js app
+      - run:
+          name: Build Next.js App
+          command: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18
+            npm run build
+            
+      # Build macOS installer
+      - run:
+          name: Build macOS Installer
+          command: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18
+            npm run dist-mac
+            
+      # Store artifacts
+      - store_artifacts:
+          path: dist
+          destination: installers
+          
+      # Upload to releases (optional)
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*.dmg
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build-macos:
+          filters:
+            branches:
+              only: main
