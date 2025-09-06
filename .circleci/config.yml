@@ -25,25 +25,35 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 18
             
-            # Check if electron.js exists and update it
-            if [ -f "electron.js" ]; then
-              # Create backup
-              cp electron.js electron.js.backup
+            # Create a Node.js script to update electron.js
+            cat > update-electron.js << 'EOF'
+            const fs = require('fs');
+            
+            if (fs.existsSync('electron.js')) {
+              let content = fs.readFileSync('electron.js', 'utf8');
               
-              # Update electron.js to use Vercel URL using perl instead of sed
-              perl -i -pe 's|const appURL = "http://localhost:3000"|const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"|g' electron.js
+              // Replace localhost with Vercel URL
+              content = content.replace(
+                'const appURL = "http://localhost:3000"',
+                'const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"'
+              );
               
-              echo "✅ Updated electron.js to use Vercel URL"
+              fs.writeFileSync('electron.js', content);
+              console.log('✅ Updated electron.js to use Vercel URL');
               
-              # Verify the change was made
-              if grep -q "my-students-track-version-releases-ltio7x6e4.vercel.app" electron.js; then
-                echo "✅ Verification: Vercel URL found in electron.js"
-              else
-                echo "⚠️ Warning: Vercel URL not found after replacement"
-              fi
-            else
-              echo "⚠️ electron.js not found, skipping URL update"
-            fi
+              // Verify the change
+              if (content.includes('my-students-track-version-releases-ltio7x6e4.vercel.app')) {
+                console.log('✅ Verification: Vercel URL found in electron.js');
+              } else {
+                console.log('⚠️ Warning: Vercel URL not found after replacement');
+              }
+            } else {
+              console.log('⚠️ electron.js not found, skipping URL update');
+            }
+            EOF
+            
+            # Run the Node.js script
+            node update-electron.js
             
       # Create macOS icon
       - run:
