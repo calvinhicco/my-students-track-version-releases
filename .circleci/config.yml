@@ -26,7 +26,7 @@ jobs:
             nvm use 18
             
             # Create a Node.js script to update electron.js
-            cat > update-electron.js << 'EOF'
+            cat > update-electron.js \<< 'EOF'
             const fs = require('fs');
             
             if (fs.existsSync('electron.js')) {
