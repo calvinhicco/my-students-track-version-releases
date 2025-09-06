@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@5.1.0
+
 jobs:
   build-macos:
     macos:
@@ -7,22 +10,15 @@ jobs:
     steps:
       - checkout
       
-      # Install Node.js
-      - run:
-          name: Install Node.js
-          command: |
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 18
-            nvm use 18
-            
-      # Create macOS icon (skip URL modification for now)
+      # Install Node.js using CircleCI orb
+      - node/install:
+          node-version: '18'
+          
+      # Create macOS icon
       - run:
           name: Create macOS Icon
           command: |
             if [ -f "public/logo.png" ] && [ ! -f "public/logo.icns" ]; then
-              # Simple icon creation
               mkdir -p logo.iconset
               sips -z 512 512 public/logo.png --out logo.iconset/icon_512x512.png
               sips -z 1024 1024 public/logo.png --out logo.iconset/icon_512x512@2x.png
@@ -35,29 +31,17 @@ jobs:
       # Install dependencies
       - run:
           name: Install Dependencies
-          command: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 18
-            npm install
+          command: npm install
             
       # Build Next.js app
       - run:
           name: Build Next.js App
-          command: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 18
-            npm run build
+          command: npm run build
             
       # Build macOS installer
       - run:
           name: Build macOS Installer
-          command: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 18
-            npm run dist-mac
+          command: npm run dist-mac
             
       # Store artifacts
       - store_artifacts:
