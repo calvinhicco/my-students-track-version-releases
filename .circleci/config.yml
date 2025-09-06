@@ -17,77 +17,22 @@ jobs:
             nvm install 18
             nvm use 18
             
-      # Update Electron to use Vercel URL
-      - run:
-          name: Configure Electron for Vercel
-          command: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 18
-            
-            # Create a Node.js script to update electron.js
-            cat > update-electron.js \<< 'EOF'
-            const fs = require('fs');
-            
-            if (fs.existsSync('electron.js')) {
-              let content = fs.readFileSync('electron.js', 'utf8');
-              
-              // Replace localhost with Vercel URL
-              content = content.replace(
-                'const appURL = "http://localhost:3000"',
-                'const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"'
-              );
-              
-              fs.writeFileSync('electron.js', content);
-              console.log('✅ Updated electron.js to use Vercel URL');
-              
-              // Verify the change
-              if (content.includes('my-students-track-version-releases-ltio7x6e4.vercel.app')) {
-                console.log('✅ Verification: Vercel URL found in electron.js');
-              } else {
-                console.log('⚠️ Warning: Vercel URL not found after replacement');
-              }
-            } else {
-              console.log('⚠️ electron.js not found, skipping URL update');
-            }
-            EOF
-            
-            # Run the Node.js script
-            node update-electron.js
-            
-      # Create macOS icon
+      # Create macOS icon (skip URL modification for now)
       - run:
           name: Create macOS Icon
           command: |
-            if [ ! -f "public/logo.icns" ]; then
-              if [ -f "public/logo.png" ]; then
-                # Create iconset directory
-                mkdir -p logo.iconset
-                
-                # Generate different sizes
-                sips -z 16 16 public/logo.png --out logo.iconset/icon_16x16.png
-                sips -z 32 32 public/logo.png --out logo.iconset/icon_16x16@2x.png
-                sips -z 32 32 public/logo.png --out logo.iconset/icon_32x32.png
-                sips -z 64 64 public/logo.png --out logo.iconset/icon_32x32@2x.png
-                sips -z 128 128 public/logo.png --out logo.iconset/icon_128x128.png
-                sips -z 256 256 public/logo.png --out logo.iconset/icon_128x128@2x.png
-                sips -z 256 256 public/logo.png --out logo.iconset/icon_256x256.png
-                sips -z 512 512 public/logo.png --out logo.iconset/icon_256x256@2x.png
-                sips -z 512 512 public/logo.png --out logo.iconset/icon_512x512.png
-                sips -z 1024 1024 public/logo.png --out logo.iconset/icon_512x512@2x.png
-                
-                # Create icns file
-                iconutil -c icns logo.iconset -o public/logo.icns
-                
-                echo "✅ Created macOS icon"
-              else
-                echo "⚠️ No logo.png found, using default icon"
-              fi
+            if [ -f "public/logo.png" ] && [ ! -f "public/logo.icns" ]; then
+              # Simple icon creation
+              mkdir -p logo.iconset
+              sips -z 512 512 public/logo.png --out logo.iconset/icon_512x512.png
+              sips -z 1024 1024 public/logo.png --out logo.iconset/icon_512x512@2x.png
+              iconutil -c icns logo.iconset -o public/logo.icns
+              echo "✅ Created macOS icon"
             else
-              echo "✅ macOS icon already exists"
+              echo "✅ Using existing icon or PNG fallback"
             fi
             
-      # Install dependencies and build
+      # Install dependencies
       - run:
           name: Install Dependencies
           command: |
@@ -118,12 +63,6 @@ jobs:
       - store_artifacts:
           path: dist
           destination: installers
-          
-      # Upload to releases (optional)
-      - persist_to_workspace:
-          root: .
-          paths:
-            - dist/*.dmg
 
 workflows:
   build-and-deploy:
