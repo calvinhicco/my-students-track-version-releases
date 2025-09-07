@@ -21,11 +21,20 @@ export class SchoolDataStorage {
         console.log(`📡 Sending ${collection} to Electron main process...`)
         const result = await (window as any).electronAPI.syncToFirestore(collection, data)
         console.log(`✅ Sync result for ${collection}:`, result)
+        
+        // Log sync status for debugging
+        if (result && result.success) {
+          console.log(`✅ Successfully synced ${collection} to Firebase`)
+        } else {
+          console.warn(`⚠️ Sync may have failed for ${collection}:`, result)
+        }
       } else {
         console.log(`⚠️ Not in Electron environment, skipping sync for ${collection}`)
       }
     } catch (error: any) {
       console.error(`❌ Failed to sync ${collection} to Firestore:`, error)
+      // Re-throw error to allow calling code to handle it
+      throw error
     }
   }
 
@@ -239,7 +248,19 @@ export class SchoolDataStorage {
 
   saveOutstandingStudents(students: any[]): boolean {
     try {
+      console.log(`💾 Saving ${students.length} outstanding students to localStorage`)
       localStorage.setItem(this.STORAGE_KEYS.OUTSTANDING, JSON.stringify(students))
+      
+      // Enhanced logging for outstanding students sync
+      if (students.length === 0) {
+        console.log(`🧹 Clearing outstanding students from Firebase (no outstanding amounts)`)
+      } else {
+        console.log(`📊 Outstanding students data:`, students.map(s => ({ 
+          name: s.fullName, 
+          amount: s.outstandingAmount 
+        })))
+      }
+      
       this.syncToFirestore('outstandingStudents', students)
       return true
     } catch (error) {

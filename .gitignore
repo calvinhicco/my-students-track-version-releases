@@ -41,7 +41,6 @@ Thumbs.db
 *.swo
 
 # Electron
-app/
 release/
 
 # Local data and backups

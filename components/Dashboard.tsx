@@ -483,32 +483,43 @@ export default function Dashboard({ user, onLogout, goToBroadcast }: DashboardPr
   // Sync outstanding students to Firebase when students or settings change
   useEffect(() => {
     if (!isLoading && isMounted && Array.isArray(students)) {
+      console.log(`🔍 Calculating outstanding amounts for ${students.length} students...`)
+      
       const studentsWithOutstanding = students.filter((student) => {
         const outstanding = calculateOutstandingFromEnrollment(
           { ...student, feePayments: Array.isArray(student.feePayments) ? student.feePayments : [] },
           settings.billingCycle,
         )
-        return outstanding > 0
+        const hasOutstanding = outstanding > 0
+        
+        if (hasOutstanding) {
+          console.log(`💰 Student ${student.fullName} has outstanding: $${outstanding}`)
+        }
+        
+        return hasOutstanding
       })
 
-      if (studentsWithOutstanding.length > 0) {
-        const outstandingData = studentsWithOutstanding.map(student => ({
-          id: student.id,
-          fullName: student.fullName,
-          className: student.className,
-          parentContact: student.parentContact,
-          outstandingAmount: calculateOutstandingFromEnrollment(
-            { ...student, feePayments: Array.isArray(student.feePayments) ? student.feePayments : [] },
-            settings.billingCycle,
-          ),
-          admissionDate: student.admissionDate,
-          hasTransport: student.hasTransport,
-          transportFee: student.transportFee,
-          classGroup: student.classGroup,
-          lastUpdated: new Date().toISOString()
-        }))
-        storage.saveOutstandingStudents(outstandingData)
-      }
+      console.log(`📋 Found ${studentsWithOutstanding.length} students with outstanding amounts`)
+
+      // Always sync - either with data or empty array to clear stale data
+      const outstandingData = studentsWithOutstanding.map(student => ({
+        id: student.id,
+        fullName: student.fullName,
+        className: student.className,
+        parentContact: student.parentContact,
+        outstandingAmount: calculateOutstandingFromEnrollment(
+          { ...student, feePayments: Array.isArray(student.feePayments) ? student.feePayments : [] },
+          settings.billingCycle,
+        ),
+        admissionDate: student.admissionDate,
+        hasTransport: student.hasTransport,
+        transportFee: student.transportFee,
+        classGroup: student.classGroup,
+        lastUpdated: new Date().toISOString()
+      }))
+      
+      console.log(`🔄 Syncing outstanding data to Firebase...`)
+      storage.saveOutstandingStudents(outstandingData)
     }
   }, [students, settings, isLoading, isMounted])
 
@@ -746,17 +757,32 @@ export default function Dashboard({ user, onLogout, goToBroadcast }: DashboardPr
     return undefined
   }, [isMounted]) // Removed 'settings' from dependency array to prevent infinite loop, as settings are now loaded within this effect.
 
-  // Real-time sync effect
+  // Real-time sync effect with enhanced outstanding tracking
   useEffect(() => {
     if (!autoSyncEnabled || !isMounted) return
 
     const syncInterval = setInterval(() => {
       setSyncStatus("syncing")
       setLastSyncTime(new Date())
+      
+      console.log(`🔄 Auto-sync triggered at ${new Date().toLocaleTimeString()}`)
 
       // Simulate data validation and sync
       setTimeout(() => {
         setSyncStatus("idle")
+        
+        // Force re-sync of outstanding students to ensure consistency
+        if (Array.isArray(students)) {
+          const currentOutstanding = students.filter((student) => {
+            const outstanding = calculateOutstandingFromEnrollment(
+              { ...student, feePayments: Array.isArray(student.feePayments) ? student.feePayments : [] },
+              settings.billingCycle,
+            )
+            return outstanding > 0
+          })
+          
+          console.log(`🔍 Auto-sync: ${currentOutstanding.length} students with outstanding amounts`)
+        }
 
         // Check for data inconsistencies and notify
         const inconsistencies = validateDataIntegrity()
@@ -772,7 +798,7 @@ export default function Dashboard({ user, onLogout, goToBroadcast }: DashboardPr
             },
           ])
         }
-      }, 30000) // Sync every 30 seconds
+      }, 2000) // Reduced to 2 seconds for faster feedback
     }, 30000) // Sync every 30 seconds
 
     return () => clearInterval(syncInterval)
@@ -1145,8 +1171,18 @@ export default function Dashboard({ user, onLogout, goToBroadcast }: DashboardPr
   }, [students, academicYear, settings.promotionThreshold, settings.graduationClassGroup, settings.classGroups])
 
   const handleStudentUpdate = (updatedStudent: Student) => {
+    console.log(`🔄 Updating student: ${updatedStudent.fullName} (ID: ${updatedStudent.id})`)
+    
     setStudents((prev) => prev.map((student) => (student.id === updatedStudent.id ? updatedStudent : student)))
     setSelectedStudent(updatedStudent)
+    
+    // Log outstanding calculation for updated student
+    const outstanding = calculateOutstandingFromEnrollment(
+      { ...updatedStudent, feePayments: Array.isArray(updatedStudent.feePayments) ? updatedStudent.feePayments : [] },
+      settings.billingCycle,
+    )
+    console.log(`💰 Updated student outstanding amount: $${outstanding}`)
+    
     // Cleanup old transfers with progress callback
     cleanupOldTransfers(
       students,
@@ -1303,6 +1339,9 @@ export default function Dashboard({ user, onLogout, goToBroadcast }: DashboardPr
     const updatedStudents = [...students, newStudent]
     setStudents(updatedStudents)
     storage.saveStudents(updatedStudents)
+    
+    console.log(`✅ Added new student: ${newStudent.fullName} (ID: ${newStudent.id})`)
+    console.log(`📊 Total students now: ${updatedStudents.length}`)
     
     setShowAddForm(false)
     setSelectedStudent(newStudent)

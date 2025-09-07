@@ -124,7 +124,7 @@ function createWindow() {
   })
 
   if (isDev) {
-    const appURL = "http://localhost:3000"
+    const appURL = "https://my-students-track-version-releases-ltio7x6e4.vercel.app"
     console.log(`Loading from: ${appURL}`)
     mainWindow.loadURL(appURL)
     .then(() => {
